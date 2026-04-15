@@ -1,18 +1,18 @@
-// Package cmd implements the top-level command logic for vaultdiff.
+// Package cmd wires together the vaultdiff command-line interface.
 //
-// It wires together the vault client, diff engine, report renderer, and audit
-// logger into a single Run function that can be driven by the main binary or
-// called directly in tests.
+// # Subpackages and responsibilities
 //
-// Typical usage:
+//   - flags.go     – parses and validates CLI flags into a typed Args struct.
+//   - run.go       – orchestrates the full diff workflow: fetch → compare → report → output.
+//   - output.go    – selects the correct formatter (text / JSON / CSV) and writes results.
+//   - pager.go     – optionally pipes output through a system pager (e.g. less).
+//   - interactive.go – interactive drift-confirmation prompts for CI gate workflows.
+//   - exit.go      – canonical exit-code constants and helpers.
 //
-//	cfg := config.Default()
-//	opts, err := cmd.ParseFlags(os.Args[1:], os.Stderr)
-//	if err != nil {
-//		os.Exit(2)
-//	}
-//	if err := cmd.Run(context.Background(), opts, cfg, os.Stdout); err != nil {
-//		fmt.Fprintln(os.Stderr, err)
-//		os.Exit(1)
-//	}
+// # Exit codes
+//
+//   0  No drift detected (or --no-exit-code flag supplied).
+//   1  Drift detected between the two secret versions.
+//   2  Fatal error; the diff could not be completed.
+//   3  User cancelled an interactive confirmation prompt.
 package cmd
