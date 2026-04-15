@@ -1,34 +1,34 @@
-// Package audit provides structured audit logging for vaultdiff operations.
 package audit
 
 import (
 	"encoding/json"
+	"fmt"
 	"io"
 	"os"
 	"time"
 )
 
-// Entry represents a single audit log record capturing a diff operation.
+// Entry represents a single audit log record for a diff operation.
 type Entry struct {
-	Timestamp   time.Time `json:"timestamp"`
-	Environment string    `json:"environment"`
-	Path        string    `json:"path"`
-	VersionA    int       `json:"version_a"`
-	VersionB    int       `json:"version_b"`
-	Added       int       `json:"added"`
-	Removed     int       `json:"removed"`
-	Modified    int       `json:"modified"`
-	HasDrift    bool      `json:"has_drift"`
-	User        string    `json:"user,omitempty"`
+	Timestamp time.Time `json:"timestamp"`
+	Actor     string    `json:"actor,omitempty"`
+	Path      string    `json:"path"`
+	VersionA  int       `json:"version_a"`
+	VersionB  int       `json:"version_b"`
+	Added     int       `json:"added"`
+	Removed   int       `json:"removed"`
+	Modified  int       `json:"modified"`
+	Unchanged int       `json:"unchanged"`
+	HasDrift  bool      `json:"has_drift"`
 }
 
-// Logger writes audit entries as newline-delimited JSON.
+// Logger writes newline-delimited JSON audit entries to an io.Writer.
 type Logger struct {
 	w io.Writer
 }
 
-// NewLogger returns a Logger that writes to w.
-// Pass os.Stdout or an *os.File as appropriate.
+// NewLogger creates a Logger that writes to w.
+// When w is nil, os.Stderr is used.
 func NewLogger(w io.Writer) *Logger {
 	if w == nil {
 		w = os.Stderr
@@ -36,17 +36,22 @@ func NewLogger(w io.Writer) *Logger {
 	return &Logger{w: w}
 }
 
-// Write serialises entry as a single JSON line to the underlying writer.
-// It stamps the entry with the current UTC time if Timestamp is zero.
+// Write serialises e as a JSON line. If e.Timestamp is zero it is set to
+// time.Now() before encoding.
 func (l *Logger) Write(e Entry) error {
 	if e.Timestamp.IsZero() {
 		e.Timestamp = time.Now().UTC()
 	}
-	data, err := json.Marshal(e)
+
+	b, err := json.Marshal(e)
 	if err != nil {
-		return err
+		return fmt.Errorf("audit: marshal entry: %w", err)
 	}
-	data = append(data, '\n')
-	_, err = l.w.Write(data)
-	return err
+
+	b = append(b, '\n')
+	_, err = l.w.Write(b)
+	if err != nil {
+		return fmt.Errorf("audit: write entry: %w", err)
+	}
+	return nil
 }
