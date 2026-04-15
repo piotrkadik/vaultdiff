@@ -84,3 +84,17 @@ func TestConfirmDrift_CaseInsensitive(t *testing.T) {
 		t.Error("expected true for uppercase Y")
 	}
 }
+
+func TestConfirmDrift_EmptyInput_ReturnsFalse(t *testing.T) {
+	// An empty reader simulates EOF without any user input (e.g. non-interactive pipe).
+	// ConfirmDrift should treat this as a decline rather than an error.
+	report := makeReport(1, 0, 0)
+	var out bytes.Buffer
+	ok, err := ConfirmDrift(report, PromptOptions{In: strings.NewReader(""), Out: &out})
+	if err != nil {
+		t.Fatalf("unexpected error on empty input: %v", err)
+	}
+	if ok {
+		t.Error("expected false when input is empty (EOF)")
+	}
+}
