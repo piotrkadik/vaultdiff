@@ -3,20 +3,29 @@ package vault
 import (
 	"context"
 	"fmt"
+	"path"
 )
 
-// SecretWriter is the interface required by callers that need to persist
-// secret data back to Vault.
-type SecretWriter interface {
-	WriteSecret(ctx context.Context, path string, data map[string]any) error
-}
+// WriteSecret writes data to the KV v2 secret at secretPath under the client's mount.
+func (c *Client) WriteSecret(ctx context.Context, secretPath string, data map[string]string) error {
+	kv := c.logical
+	fullPath := path.Join(c.mount, "data", secretPath)
 
-// WriteSecret writes data to the KVv2 secret at path using the client's mount.
-// The Vault API creates a new version; existing versions are preserved.
-func (c *Client) WriteSecret(ctx context.Context, path string, data map[string]any) error {
-	_, err := c.kv.Put(ctx, path, data)
+	payload := map[string]interface{}{
+		"data": toAnyMap(data),
+	}
+
+	_, err := kv.WriteWithContext(ctx, fullPath, payload)
 	if err != nil {
-		return fmt.Errorf("vault: write secret %q: %w", path, err)
+		return fmt.Errorf("write secret %s: %w", secretPath, err)
 	}
 	return nil
+}
+
+func toAnyMap(in map[string]string) map[string]interface{} {
+	out := make(map[string]interface{}, len(in))
+	for k, v := range in {
+		out[k] = v
+	}
+	return out
 }
