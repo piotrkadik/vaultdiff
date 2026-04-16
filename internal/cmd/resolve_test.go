@@ -44,6 +44,16 @@ func TestResolveVersions_BothExplicit(t *testing.T) {
 	}
 }
 
+func TestResolveVersions_FromEqualsTo_ReturnsError(t *testing.T) {
+	client := resolveVaultStub(t, nil)
+	opts := DefaultResolveOptions()
+
+	_, err := ResolveVersions(context.Background(), client, "svc/config", 4, 4, opts)
+	if err == nil {
+		t.Fatal("expected error when from == to, got nil")
+	}
+}
+
 func TestResolveVersions_InvalidAddress_ReturnsError(t *testing.T) {
 	client, err := vault.NewClient(vault.Config{
 		Address: "http://127.0.0.1:19999",
