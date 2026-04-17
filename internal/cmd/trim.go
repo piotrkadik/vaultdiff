@@ -33,15 +33,30 @@ type TrimOptions struct {
 
 // TrimResult holds the outcome of a Trim operation.
 type TrimResult struct {
-	Path     string `json:"path"`
-	Removed  []int  `json:"removed_versions"`
-	DryRun   bool   `json:"dry_run"`
+	Path    string `json:"path"`
+	Removed []int  `json:"removed_versions"`
+	DryRun  bool   `json:"dry_run"`
+}
+
+// validate checks that required TrimOptions fields are set and values are sane.
+func (o TrimOptions) validate() error {
+	if o.Path == "" {
+		return fmt.Errorf("trim: path must not be empty")
+	}
+	if o.Keep < 1 {
+		return fmt.Errorf("trim: keep must be at least 1, got %d", o.Keep)
+	}
+	return nil
 }
 
 // Trim deletes old secret versions beyond the Keep threshold.
 func Trim(opts TrimOptions) error {
 	if opts.Output == nil {
 		opts.Output = os.Stdout
+	}
+
+	if err := opts.validate(); err != nil {
+		return err
 	}
 
 	client, err := vault.NewClient(opts.Address, opts.Token, opts.Mount)
