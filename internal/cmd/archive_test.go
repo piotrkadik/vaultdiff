@@ -33,6 +33,29 @@ func TestArchive_WritesJSON(t *testing.T) {
 	}
 }
 
+func TestArchive_WritesJSON_ContainsSecrets(t *testing.T) {
+	srv := newDiffVaultStub(t, map[string]string{"DB_PASS": "secret"})
+	var buf bytes.Buffer
+	err := Archive(ArchiveOptions{
+		Address: srv.URL,
+		Token:   "test-token",
+		Path:    "secret/data/app",
+		Version: 1,
+		Mask:    false,
+		Output:  &buf,
+	})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	var rec ArchiveRecord
+	if err := json.NewDecoder(&buf).Decode(&rec); err != nil {
+		t.Fatalf("invalid JSON: %v", err)
+	}
+	if val, ok := rec.Data["DB_PASS"]; !ok || val != "secret" {
+		t.Errorf("expected DB_PASS=secret in archive data, got %q", val)
+	}
+}
+
 func TestArchive_MasksValues(t *testing.T) {
 	srv := newDiffVaultStub(t, map[string]string{"DB_PASS": "hunter2"})
 	var buf bytes.Buffer
