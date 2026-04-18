@@ -44,6 +44,20 @@ type PinResult struct {
 	DryRun  bool           `json:"dry_run"`
 }
 
+// validate checks that required PinOptions fields are set.
+func (o PinOptions) validate() error {
+	if o.Address == "" {
+		return fmt.Errorf("pin: VAULT_ADDR or Address must be set")
+	}
+	if o.Token == "" {
+		return fmt.Errorf("pin: VAULT_TOKEN or Token must be set")
+	}
+	if o.Path == "" {
+		return fmt.Errorf("pin: Path must be set")
+	}
+	return nil
+}
+
 // Pin records the current or specified version of a secret as the pinned reference.
 func Pin(ctx context.Context, opts PinOptions) (*PinResult, error) {
 	if opts.Output == nil {
@@ -51,6 +65,10 @@ func Pin(ctx context.Context, opts PinOptions) (*PinResult, error) {
 	}
 	if opts.Mount == "" {
 		opts.Mount = "secret"
+	}
+
+	if err := opts.validate(); err != nil {
+		return nil, err
 	}
 
 	client, err := vault.NewClient(opts.Address, opts.Token, opts.Mount)
