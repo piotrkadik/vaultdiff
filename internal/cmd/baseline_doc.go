@@ -17,9 +17,20 @@
 //	opts.Mask = false         // emit plaintext values (use with care)
 //	err := cmd.CaptureBaseline(ctx, client, "myapp/config", opts)
 //
+// To load a previously written baseline for comparison:
+//
+//	baseline, err := cmd.LoadBaseline(opts.Output)
+//	if err != nil {
+//		log.Fatal(err)
+//	}
+//
 // The JSON record written to opts.Output contains:
-//   - path       – the secret path
-//   - version    – the KV version that was read
+//   - path        – the secret path
+//   - version     – the KV version that was read
 //   - captured_at – RFC-3339 timestamp
-//   - data       – key/value pairs (optionally masked)
+//   - data        – key/value pairs (optionally masked)
+//
+// Masked values are replaced with a fixed placeholder string so that the
+// baseline file can be stored safely in version control or shared across
+// teams without exposing sensitive credentials.
 package cmd
