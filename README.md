@@ -50,8 +50,10 @@ vaultdiff --path secret/myapp/config --v1 2 --v2 4 --output report.json
 | `--src` | Source environment path |
 | `--dst` | Destination environment path |
 | `--output` | Write diff output to a file |
+| `--format` | Output format: `text` (default), `json`, or `yaml` |
 | `--token` | Vault token (or set `VAULT_TOKEN`) |
 | `--addr` | Vault address (or set `VAULT_ADDR`) |
+| `--mask` | Mask secret values in output (shows `***` instead of plaintext) |
 
 ---
 
